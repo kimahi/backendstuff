@@ -21,85 +21,85 @@ app.use(bodyParser.json());
 const connection = db.connect();
 
 const cb = (result, res) => {
-  console.log(result);
-  res.send(result);
+    console.log(result);
+    res.send(result);
 };
 
 app.use(express.static('public'));
 
 // respond to post and save file
 app.post('/upload', upload.single('mediafile'), (req, res, next) => {
-  next();
+    next();
 });
 
 // create thumbnail
 app.use('/upload', (req, res, next) => {
-  resize.doResize(req.file.path, 300,
-      './public/thumbs/' + req.file.filename + '_thumb', next);
+    resize.doResize(req.file.path, 300,
+        './public/thumbs/' + req.file.filename + '_thumb', next);
 });
 
 // create medium image
 app.use('/upload', (req, res, next) => {
-  resize.doResize(req.file.path, 640,
-      './public/medium/' + req.file.filename + '_medium', next);
+    resize.doResize(req.file.path, 640,
+        './public/medium/' + req.file.filename + '_medium', next);
 });
 
 // get coordinates
 app.use('/upload', (req, res, next) => {
-  exif.getCoordinates(req.file.path).then(coords => {
-    req.coordinates = coords;
-    next();
-  }).catch(() => {
-    console.log('No coordinates');
-    req.coordinates = {};
-    next();
-  });
+    exif.getCoordinates(req.file.path).then(coords => {
+        req.coordinates = coords;
+        next();
+    }).catch(() => {
+        console.log('No coordinates');
+        req.coordinates = {};
+        next();
+    });
 });
 
 // insert to database
 app.use('/upload', (req, res, next) => {
-  console.log('insert is here');
-  const data = [
-    req.body.category,
-    req.body.title,
-    req.body.details,
-    req.file.filename + '_thumb',
-    req.file.filename + '_medium',
-    req.file.filename,
-    req.coordinates,
-  ];
-  db.insert(data, connection, next);
+    console.log('insert is here');
+    const data = [
+        req.body.category,
+        req.body.title,
+        req.body.details,
+        req.file.filename + '_thumb',
+        req.file.filename + '_medium',
+        req.file.filename,
+        req.coordinates,
+    ];
+    db.insert(data, connection, next);
 });
 
 // get updated data form database and send to client
 app.use('/upload', (req, res) => {
-  db.select(connection, cb, res);
+    db.select(connection, cb, res);
 });
 
 app.get('/images', (req, res) => {
-  db.select(connection, cb, res);
+    db.select(connection, cb, res);
 });
 
 app.patch('/images', (req, res) => {
-  console.log('body', req.body);
-  const update = db.update(req.body, connection);
-  console.log('update', update);
-  res.send('{"status": "update OK"}');
+    console.log('body', req.body);
+    const update = db.update(req.body, connection);
+    console.log('update', update);
+    res.send('{"status": "OK"}');
 });
-
-app.delete('/images/:mID', (req, res)=>{
-  const mID = [req.params.mID];
-  db.del(mID, connection);
-  res.send('{"status": "delete OK"}');
+app.delete('/images/:mID', (req, res) => {
+    const mID = [req.params.mID];
+    db.del(mID, connection);
+    res.send('{"status": "delete OK"}');
 });
+app.get('/search/:category', (req, res) => {
 
-app.search('/images/:category', (req, res) => {
-  console.log('body', req.body);
-  const category = [req.params.category];
-  db.srch(category, connection);
-  res.send('{"status": "search OK"}');
+    const category = [req.params.category];
+    console.log('kategoria', category[0]);
+    db.search(category, connection, cb, res);
+    console.log('search');
+    // res.send('{"status": "suattaapi olla että toimii suattaapi olla että ei"}');
 });
-
 //app.listen(3000);
+
 app.listen(8000); //normal http traffic
-https.createServer(options, app).listen(3000); //https traffic
+https.createServer(options, app).listen(3000); //https traffiapp.listen(3000);
